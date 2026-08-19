@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Akıllı Takvim ve Sesli Asistan</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 600px; background: var(--card-bg); padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h2 { margin: 0; color: var(--accent); font-size: 1.2rem; }
+        .btn { background: var(--accent); color: var(--bg); border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn:hover { background: #0ea5e9; }
+        .notification-banner { background: #334155; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+        
+        /* Takvim Izgarası */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+        .day-name { font-weight: bold; color: var(--text-muted); padding-bottom: 10px; font-size: 0.85rem; }
+        .day-cell { background: #0b1329; padding: 12px 0; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); transition: 0.2s; position: relative; }
+        .day-cell:hover { border-color: var(--accent); background: #111827; }
+        .day-cell.has-event::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+        .empty-cell { background: transparent; border: none; cursor: default; }
+
+        /* Modal Pencere */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--card-bg); padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; border: 1px solid var(--border); box-shadow: 0 15px 30px rgba(0,0,0,0.6); }
+        .modal-content h3 { margin-top: 0; color: var(--accent); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
+        .form-control { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn-secondary { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+        
+        /* Liste Alanı */
+        .event-list-container { margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px; }
+        .event-item { background: #0b1329; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); }
+        .event-info h4 { margin: 0; font-size: 0.95rem; }
+        .event-info p { margin: 4px 0 0 0; font-size: 0.8rem; color: var(--text-muted); }
+        .delete-btn { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="notification-banner" id="notifBanner">
+            <span>Bildirimler ve sesli uyarılar için izin verin:</span>
+            <button class="btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="requestNotificationPermission()">İzin İste</button>
+        </div>
+
+        <div class="header">
+            <h2 id="monthYearTitle">Takvim</h2>
+            <div>
+                <button class="btn" onclick="changeMonth(-1)">‹</button>
+                <button class="btn" onclick="changeMonth(1)">›</button>
+            </div>
+        </div>
+
+        <div class="calendar-grid">
+            <div class="day-name">Pzt</div>
+            <div class="day-name">Sal</div>
+            <div class="day-name">Çar</div>
+            <div class="day-name">Per</div>
+            <div class="day-name">Cum</div>
+            <div class="day-name">Cmt</div>
+            <div class="day-name">Paz</div>
+        </div>
+        <div class="calendar-grid" id="calendarDays" style="margin-top: 5px;"></div>
+
+        <div class="event-list-container">
+            <h3 style="font-size: 1rem; color: var(--text-muted); margin-bottom: 10px;">Kayıtlı Tüm Terminler</h3>
+            <div id="eventList"></div>
+        </div>
+    </div>
+
+    <!-- Modal Alanı -->
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <h3 id="modalDateTitle">Tarih Seçildi</h3>
+            <div class="form-group">
+                <label>Etkinlik İsmi (İsmi ne olsun?)</label>
+                <input type="text" id="eventTitleInput" class="form-control" placeholder="Örn: Toplantı">
+            </div>
+            <div class="form-group">
+                <label>Açıklama / Biyografi (Bioda ne yazsın?)</label>
+                <textarea id="eventBioInput" class="form-control" rows="3" placeholder="Detaylar..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Saat (Ne zaman bildirim gelsin?)</label>
+                <input type="time" id="eventTimeInput" class="form-control" value="12:00">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">İptal</button>
+                <button class="btn" onclick="saveEvent()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDate = new Date();
+        let events = JSON.parse(localStorage.getItem('global_calendar_events')) || [];
+        let selectedDateStr = '';
+
+        function initCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            document.getElementById('monthYearTitle').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            const calendarDaysEl = document.getElementById('calendarDays');
+            calendarDaysEl.innerHTML = '';
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'day-cell empty-cell';
+                calendarDaysEl.appendChild(emptyDiv);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day-cell';
+                dayDiv.innerText = day;
+
+                const formattedMonth = String(month + 1).padStart(2, '0');
+                const formattedDay = String(day).padStart(2, '0');
+                const dateStr = `${year}-${formattedMonth}-${formattedDay}`;
+
+                if (events.some(e => e.date === dateStr)) {
+                    dayDiv.classList.add('has-event');
+                }
+
+                dayDiv.onclick = () => openModal(dateStr, day, monthNames[month], year);
+                calendarDaysEl.appendChild(dayDiv);
+            }
+
+            renderEventList();
+        }
+
+        function changeMonth(direction) {
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            initCalendar();
+        }
+
+        function openModal(dateStr, day, monthName, year) {
+            selectedDateStr = dateStr;
+            document.getElementById('modalDateTitle').innerText = `${day} ${monthName} ${year}`;
+            document.getElementById('eventTitleInput').value = '';
+            document.getElementById('eventBioInput').value = '';
+            document.getElementById('eventModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').classList.remove('active');
+        }
+
+        function saveEvent() {
+            const title = document.getElementById('eventTitleInput').value.trim();
+            const bio = document.getElementById('eventBioInput').value.trim();
+            const time = document.getElementById('eventTimeInput').value;
+
+            if (!title) {
+                alert('Etkinlik ismi boş olamaz!');
+                return;
+            }
+
+            events.push({
+                id: Date.now(),
+                date: selectedDateStr,
+                time: time,
+                title: title,
+                bio: bio,
+                alerted: false
+            });
+
+            localStorage.setItem('global_calendar_events', JSON.stringify(events));
+            closeModal();
+            initCalendar();
+        }
+
+        function deleteEvent(id) {
+            events = events.filter(e => e.id !== id);
+            localStorage.setItem('global_calendar_events', JSON.stringify(events));
+            initCalendar();
+        }
+
+        function renderEventList() {
+            const listEl = document.getElementById('eventList');
+            listEl.innerHTML = '';
+
+            if (events.length === 0) {
+                listEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem; text-align:center;">Kayıt bulunmuyor.</p>';
+                return;
+            }
+
+            events.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+
+            events.forEach(e => {
+                const item = document.createElement('div');
+                item.className = 'event-item';
+                item.innerHTML = `
+                    <div class="event-info">
+                        <h4>${e.title} <span style="font-size:0.75rem; color:var(--accent);">(${e.date} - ${e.time})</span></h4>
+                        <p>${e.bio || 'Açıklama yok'}</p>
+                    </div>
+                    <button class="delete-btn" onclick="deleteEvent(${e.id})">Sil</button>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        document.getElementById('notifBanner').style.display = 'none';
+                        new Notification("Harika!", { body: "Bildirimler başarıyla etkinleştirildi." });
+                    }
+                });
+            }
+        }
+
+        // Alarm ve Bildirim Kontrol Motoru (Her 10 saniyede bir çalışır)
+        setInterval(() => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            const currentDateStr = `${year}-${month}-${day}`;
+            const currentTimeStr = `${hours}:${minutes}`;
+
+            events.forEach(e => {
+                if (e.date === currentDateStr && e.time === currentTimeStr && !e.alerted) {
+                    e.alerted = true;
+                    localStorage.setItem('global_calendar_events', JSON.stringify(events));
+                    
+                    // Sesli okuma
+                    speakText(`Zamanı geldi! ${e.title}. ${e.bio}`);
+
+                    // Ekran bildirimi
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        new Notification(e.title, { body: e.bio || "Termin zamanı geldi!" });
+                    }
+                }
+            });
+        }, 10000);
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'tr-TR';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Sayfa açıldığında bildirim izni verilmişse banner'ı gizle
+        if ("Notification" in window && Notification.permission === "granted") {
+            document.getElementById('notifBanner').style.display = 'none';
+        }
+
+        initCalendar();
+    </script>
+</body>
+  </html>
+  
