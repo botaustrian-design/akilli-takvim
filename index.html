@@ -375,9 +375,9 @@
             };
             reader.readAsText(file);
         }
-            // Sesli Uyarı ve Bildirim Sistemi
+            // Sesli Uyarı Sistemi
 function terminSesliUyar(terminIsmi) {
-    const mesajMetni = "DİKKAT! TERMİN YAKLAŞIYOR! " + terminIsmi;
+    const mesajMetni = "DİKKAT! " + terminIsmi + " YAKLAŞIYOR!";
     const msg = new SpeechSynthesisUtterance(mesajMetni);
     msg.lang = 'tr-TR';
     msg.rate = 1;
@@ -385,25 +385,36 @@ function terminSesliUyar(terminIsmi) {
     window.speechSynthesis.speak(msg);
 }
 
+// Kontrol Sistemi
 setInterval(() => {
-    if (Notification.permission !== "granted") {
-        Notification.requestPermission();
-    }
-    try {
-        const savedEvents = JSON.parse(localStorage.getItem('pro_calendar_events_v2')) || [];
-        const simdi = new Date().getTime();
-        savedEvents.forEach(termin => {
-            const terminZamani = new Date(termin.date + 'T' + termin.time).getTime();
-            const alarmVakti = terminZamani - (4 * 60 * 60 * 1000);
-            if (simdi >= alarmVakti && simdi <= alarmVakti + 60000) {
-                terminSesliUyar(termin.title);
-                if (Notification.permission === "granted") {
-                    new Notification("Akıllı Takvim", { body: "DİKKAT! " + termin.title + " YAKLAŞIYOR!" });
-                }
+    // 1. İzinleri al
+    if (Notification.permission !== "granted") Notification.requestPermission();
+    
+    // 2. Verileri çek
+    const savedEvents = JSON.parse(localStorage.getItem('pro_calendar_events_v2')) || [];
+    const simdi = new Date();
+    
+    savedEvents.forEach(termin => {
+        // Tarih ve saati birleştir
+        const terminTarihStr = termin.date + 'T' + termin.time;
+        const terminZamani = new Date(terminTarihStr);
+        
+        // 4 saat öncesini hesapla (milisaniye)
+        const alarmVakti = new Date(terminZamani.getTime() - (4 * 60 * 60 * 1000));
+        
+        // Kontrol: Şu an alarm vaktini geçtiyse veya alarm vaktindeysek
+        // (Dakika farkı 2'den küçükse çalıştır)
+        const fark = Math.abs(simdi - alarmVakti) / 60000;
+        
+        if (fark <= 2) {
+            console.log("Alarm vakti geldi!");
+            terminSesliUyar(termin.title);
+            if (Notification.permission === "granted") {
+                new Notification("Akıllı Takvim", { body: "DİKKAT! " + termin.title + " YAKLAŞIYOR!" });
             }
-        });
-    } catch(e) { console.log("Kontrol hatası:", e); }
-}, 60000);
+        }
+    });
+}, 30000); // 30 saniyede bir kontrol et (daha hızlı)
        
     initCalendar();
    
