@@ -385,36 +385,36 @@ function terminSesliUyar(terminIsmi) {
     window.speechSynthesis.speak(msg);
 }
 
-// Kontrol Sistemi
+// Gelişmiş Kontrol Sistemi (Türkçe/İngilizce Uyumlu)
 setInterval(() => {
-    // 1. İzinleri al
-    if (Notification.permission !== "granted") Notification.requestPermission();
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
     
-    // 2. Verileri çek
     const savedEvents = JSON.parse(localStorage.getItem('pro_calendar_events_v2')) || [];
     const simdi = new Date();
     
     savedEvents.forEach(termin => {
-        // Tarih ve saati birleştir
-        const terminTarihStr = termin.date + 'T' + termin.time;
-        const terminZamani = new Date(terminTarihStr);
+        // Alan adları ister İngilizce ister Türkçe olsun yakalar
+        const tarihStr = termin.date || termin.tarih;
+        const saatStr = termin.time || termin.saat;
+        const baslikStr = termin.title || termin.baslik || "Termin";
         
-        // 4 saat öncesini hesapla (milisaniye)
+        if (!tarihStr || !saatStr) return;
+        
+        const terminZamani = new Date(tarihStr + 'T' + saatStr);
         const alarmVakti = new Date(terminZamani.getTime() - (4 * 60 * 60 * 1000));
         
-        // Kontrol: Şu an alarm vaktini geçtiyse veya alarm vaktindeysek
-        // (Dakika farkı 2'den küçükse çalıştır)
         const fark = Math.abs(simdi - alarmVakti) / 60000;
         
         if (fark <= 2) {
-            console.log("Alarm vakti geldi!");
-            terminSesliUyar(termin.title);
+            terminSesliUyar(baslikStr);
             if (Notification.permission === "granted") {
-                new Notification("Akıllı Takvim", { body: "DİKKAT! " + termin.title + " YAKLAŞIYOR!" });
+                new Notification("Akıllı Takvim", { body: "DİKKAT! " + baslikStr + " YAKLAŞIYOR!" });
             }
         }
     });
-}, 30000); // 30 saniyede bir kontrol et (daha hızlı)
+}, 30000);
        
     initCalendar();
    
