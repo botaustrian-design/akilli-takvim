@@ -375,22 +375,36 @@
             };
             reader.readAsText(file);
         }
-            // Sesli Uyarı Sistemi
-    function terminSesliUyar(terminIsmi) {
-        const mesajMetni = "DİKKAT! TERMİN YAKLAŞIYOR! " + terminIsmi;
-        const msg = new SpeechSynthesisUtterance(mesajMetni);
-        msg.lang = 'tr-TR';
-        msg.rate = 1;
-        msg.volume = 1;
-        window.speechSynthesis.speak(msg);
+            // Sesli Uyarı ve Bildirim Sistemi
+function terminSesliUyar(terminIsmi) {
+    const mesajMetni = "DİKKAT! TERMİN YAKLAŞIYOR! " + terminIsmi;
+    const msg = new SpeechSynthesisUtterance(mesajMetni);
+    msg.lang = 'tr-TR';
+    msg.rate = 1;
+    msg.volume = 1;
+    window.speechSynthesis.speak(msg);
+}
+
+setInterval(() => {
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
     }
-
-    setInterval(() => {
-        if (Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
-    }, 60000);
-
+    try {
+        const savedEvents = JSON.parse(localStorage.getItem('pro_calendar_events_v2')) || [];
+        const simdi = new Date().getTime();
+        savedEvents.forEach(termin => {
+            const terminZamani = new Date(termin.date + 'T' + termin.time).getTime();
+            const alarmVakti = terminZamani - (4 * 60 * 60 * 1000);
+            if (simdi >= alarmVakti && simdi <= alarmVakti + 60000) {
+                terminSesliUyar(termin.title);
+                if (Notification.permission === "granted") {
+                    new Notification("Akıllı Takvim", { body: "DİKKAT! " + termin.title + " YAKLAŞIYOR!" });
+                }
+            }
+        });
+    } catch(e) { console.log("Kontrol hatası:", e); }
+}, 60000);
+       
     initCalendar();
    
     </script>
