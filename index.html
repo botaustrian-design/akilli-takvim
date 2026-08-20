@@ -3,135 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akıllı Termin Asistanı</title>
+    <title>Pro Termin Asistanı</title>
     <style>
         :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --bg-dark: #0f172a;
-            --glass: rgba(255, 255, 255, 0.05);
+            --bg: #0f172a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
             --text: #f8fafc;
             --text-muted: #94a3b8;
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            input-bg: #0f172a;
+        }
+
+        .light-mode {
+            --bg: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --border: rgba(0, 0, 0, 0.1);
+            --text: #0f172a;
+            --text-muted: #64748b;
         }
 
         body { 
             font-family: 'Inter', system-ui, sans-serif; 
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); 
-            color: var(--text); margin: 0; padding: 20px; 
+            background: var(--bg); 
+            color: var(--text); margin: 0; padding: 15px; 
             display: flex; justify-content: center; min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
         }
 
         .card { 
-            width: 100%; max-width: 450px; background: var(--glass);
-            backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
-            padding: 25px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            width: 100%; max-width: 480px; background: var(--card-bg);
+            backdrop-filter: blur(20px); border: 1px solid var(--border);
+            padding: 20px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            box-sizing: border-box;
         }
 
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h2 { 
-            margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 8px;
-            background: linear-gradient(to right, #6366f1, #a855f7); 
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+        .top-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        
+        .countdown-box {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; padding: 12px; border-radius: 16px; text-align: center;
+            margin-bottom: 15px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
         }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header h2 { margin: 0; font-size: 1.2rem; }
 
         .btn { 
-            background: linear-gradient(135deg, #6366f1, #a855f7); 
-            color: white; border: none; padding: 8px 14px; border-radius: 12px; 
-            font-weight: 600; cursor: pointer; transition: transform 0.2s, opacity 0.2s;
+            background: linear-gradient(135deg, var(--primary), var(--secondary)); 
+            color: white; border: none; padding: 8px 12px; border-radius: 10px; 
+            font-weight: 600; cursor: pointer; font-size: 0.8rem; transition: transform 0.2s;
         }
-        .btn:hover { transform: scale(1.05); opacity: 0.9; }
+        .btn:hover { transform: scale(1.03); }
 
-        /* Gün İsimleri ve Izgara */
+        .search-box { width: 100%; padding: 10px 15px; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-radius: 12px; box-sizing: border-box; margin-bottom: 15px; font-size: 0.9rem; }
+
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
         .day-name { font-size: 0.75rem; color: var(--text-muted); font-weight: bold; padding-bottom: 5px; }
         
         .day-cell { 
-            padding: 12px 0; border-radius: 12px; cursor: pointer; 
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s; font-size: 0.9rem; position: relative;
+            padding: 10px 0; border-radius: 10px; cursor: pointer; 
+            background: var(--card-bg); border: 1px solid var(--border);
+            transition: all 0.2s; font-size: 0.85rem; position: relative;
         }
-        .day-cell:hover:not(.past) { background: var(--primary); transform: translateY(-2px); border-color: var(--primary); }
+        .day-cell:hover:not(.past) { background: var(--primary); color: white; transform: translateY(-2px); }
         .day-cell.has-event::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: #38bdf8; border-radius: 50%; }
-        
-        /* Geçmiş Günler */
-        .day-cell.past { opacity: 0.25; cursor: not-allowed; background: transparent; }
+        .day-cell.past { opacity: 0.2; cursor: not-allowed; }
 
         .modal { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); 
-            justify-content: center; align-items: center; z-index: 1000;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); 
+            justify-content: center; align-items: center; z-index: 1000; padding: 15px;
         }
         .modal.active { display: flex; }
         .modal-content { 
-            background: #1e293b; padding: 25px; border-radius: 24px; width: 90%; max-width: 380px;
-            border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 15px 30px rgba(0,0,0,0.5);
-            animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: var(--bg); padding: 20px; border-radius: 20px; width: 100%; max-width: 360px;
+            border: 1px solid var(--border); box-shadow: 0 15px 30px rgba(0,0,0,0.4);
         }
-        @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        .input-group { position: relative; margin-bottom: 12px; }
-        .input-group span { position: absolute; left: 12px; top: 14px; font-size: 1rem; }
+        .form-control { width: 100%; padding: 10px; margin: 8px 0; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-radius: 10px; box-sizing: border-box; font-size: 0.9rem; }
         
-        input, textarea { 
-            width: 100%; padding: 12px 12px 12px 40px; background: #0f172a; 
-            border: 1px solid #334155; color: white; border-radius: 12px; box-sizing: border-box; font-size: 0.9rem;
-        }
-        input[type="time"] { padding-left: 40px; }
+        .category-selector { display: flex; gap: 8px; margin: 8px 0; }
+        .cat-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
+        .cat-btn.selected { border-color: var(--primary); background: var(--primary); color: white; }
 
         .event-item { 
-            background: rgba(255,255,255,0.03); padding: 12px 15px; border-radius: 14px; 
-            margin-top: 10px; display: flex; justify-content: space-between; align-items: center;
-            border-left: 3px solid var(--primary);
+            background: var(--card-bg); padding: 10px 12px; border-radius: 12px; 
+            margin-top: 8px; display: flex; justify-content: space-between; align-items: center;
+            border-left: 4px solid var(--primary); font-size: 0.85rem;
         }
+        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); margin-left: 5px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <div class="header">
-            <h2 id="monthYearTitle">📅 Ağustos 2026</h2>
+        <div class="top-actions">
+            <button class="btn" onclick="toggleTheme()" id="themeBtn">☀️ Tema</button>
             <div>
-                <button class="btn" style="padding: 5px 10px;" onclick="changeMonth(-1)">‹</button>
-                <button class="btn" style="padding: 5px 10px;" onclick="changeMonth(1)">›</button>
+                <button class="btn" onclick="exportData()" style="background:#10b981;">📥 Yedekle</button>
+                <button class="btn" onclick="document.getElementById('importFile').click()" style="background:#f59e0b;">📤 Yükle</button>
+                <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+            </div>
+        </div>
+
+        <div class="countdown-box" id="countdownBox">⏳ Yaklaşan etkinlik yok</div>
+
+        <input type="text" class="search-box" id="searchInput" placeholder="🔍 Termin ara..." oninput="renderList()">
+
+        <div class="header">
+            <h2 id="monthYearTitle">Ağustos 2026</h2>
+            <div>
+                <button class="btn" style="padding: 4px 8px;" onclick="changeMonth(-1)">‹</button>
+                <button class="btn" style="padding: 4px 8px;" onclick="changeMonth(1)">›</button>
             </div>
         </div>
 
         <div class="calendar-grid">
-            <div class="day-name">Pzt</div>
-            <div class="day-name">Sal</div>
-            <div class="day-name">Çar</div>
-            <div class="day-name">Per</div>
-            <div class="day-name">Cum</div>
-            <div class="day-name">Cmt</div>
-            <div class="day-name">Paz</div>
+            <div class="day-name">Pzt</div><div class="day-name">Sal</div><div class="day-name">Çar</div>
+            <div class="day-name">Per</div><div class="day-name">Cum</div><div class="day-name">Cmt</div><div class="day-name">Paz</div>
         </div>
         <div class="calendar-grid" id="calendarDays" style="margin-top: 6px;"></div>
 
-        <div id="eventList" style="margin-top:20px;"></div>
+        <div id="eventList" style="margin-top:15px; max-height: 200px; overflow-y: auto;"></div>
     </div>
 
     <!-- Modal -->
     <div class="modal" id="eventModal">
         <div class="modal-content">
-            <h3 id="modalDateTitle" style="margin-top:0; color:#38bdf8; font-size:1.1rem;">✨ Yeni Termin</h3>
+            <h3 style="margin-top:0; font-size:1rem;">📌 Yeni Termin Ekle</h3>
+            <input type="text" class="form-control" id="eventTitleInput" placeholder="Etkinlik İsmi">
             
-            <div class="input-group">
-                <span>📌</span>
-                <input type="text" id="eventTitleInput" placeholder="Etkinlik İsmi">
-            </div>
-            
-            <div class="input-group">
-                <span>📝</span>
-                <textarea id="eventBioInput" rows="2" placeholder="Bio / Açıklama" style="padding-top:12px;"></textarea>
-            </div>
-            
-            <div class="input-group">
-                <span>⏰</span>
-                <input type="time" id="eventTimeInput" value="12:00">
+            <div class="category-selector">
+                <button class="cat-btn selected" onclick="setCategory('İş', this)" style="--primary:#6366f1;">İş</button>
+                <button class="cat-btn" onclick="setCategory('Özel', this)" style="--primary:#ec4899;">Özel</button>
+                <button class="cat-btn" onclick="setCategory('Eğitim', this)" style="--primary:#eab308;">Eğitim</button>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:15px;">
-                <button class="btn" style="flex:1; background: #334155;" onclick="closeModal()">İptal</button>
+            <textarea class="form-control" id="eventBioInput" rows="2" placeholder="Bio / Açıklama"></textarea>
+            <input type="time" class="form-control" id="eventTimeInput" value="12:00">
+
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <button class="btn" style="flex:1; background:#64748b;" onclick="closeModal()">İptal</button>
                 <button class="btn" style="flex:1;" onclick="saveEvent()">Kaydet</button>
             </div>
         </div>
@@ -139,25 +153,29 @@
 
     <script>
         let currentDate = new Date();
-        let events = JSON.parse(localStorage.getItem('calendar_events')) || [];
+        let events = JSON.parse(localStorage.getItem('pro_calendar_events')) || [];
         let selectedDateStr = '';
+        let selectedCategory = 'İş';
+
+        function setCategory(cat, btn) {
+            selectedCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
 
         function initCalendar() {
             const y = currentDate.getFullYear(), m = currentDate.getMonth();
             const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-            document.getElementById('monthYearTitle').innerText = `📅 ${monthNames[m]} ${y}`;
+            document.getElementById('monthYearTitle').innerText = `${monthNames[m]} ${y}`;
             
             const totalDays = new Date(y, m+1, 0).getDate();
             const startDay = (new Date(y, m, 1).getDay() + 6) % 7;
             const grid = document.getElementById('calendarDays'); 
             grid.innerHTML = '';
 
-            for(let i=0; i<startDay; i++) {
-                grid.innerHTML += `<div></div>`;
-            }
+            for(let i=0; i<startDay; i++) grid.innerHTML += `<div></div>`;
 
-            const today = new Date();
-            today.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0,0,0,0);
 
             for(let i=1; i<=totalDays; i++) {
                 const cellDate = new Date(y, m, i);
@@ -185,55 +203,116 @@
             document.getElementById('eventModal').classList.add('active'); 
         }
         
-        function closeModal() { 
-            document.getElementById('eventModal').classList.remove('active'); 
-        }
+        function closeModal() { document.getElementById('eventModal').classList.remove('active'); }
         
         function saveEvent() {
             const title = document.getElementById('eventTitleInput').value.trim();
-            if(!title) { alert('Lütfen etkinlik ismi girin!'); return; }
+            if(!title) { alert('Etkinlik ismi gerekli!'); return; }
             
             events.push({ 
                 id: Date.now(), 
                 date: selectedDateStr, 
                 title: title, 
                 bio: document.getElementById('eventBioInput').value, 
-                time: document.getElementById('eventTimeInput').value 
+                time: document.getElementById('eventTimeInput').value,
+                category: selectedCategory
             });
-            localStorage.setItem('calendar_events', JSON.stringify(events));
-            closeModal(); 
-            initCalendar();
+            localStorage.setItem('pro_calendar_events', JSON.stringify(events));
+            closeModal(); initCalendar();
         }
         
-        function changeMonth(dir) { 
-            currentDate.setMonth(currentDate.getMonth() + dir); 
-            initCalendar(); 
-        }
+        function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); initCalendar(); }
         
         function renderList() {
             const list = document.getElementById('eventList'); 
+            const query = document.getElementById('searchInput').value.toLowerCase();
             list.innerHTML = '';
             
-            if(events.length === 0) return;
+            const filtered = events.filter(e => e.title.toLowerCase().includes(query) || e.bio.toLowerCase().includes(query));
+            filtered.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
 
-            events.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
-
-            events.forEach(e => {
+            filtered.forEach(e => {
+                let catColor = e.category === 'Özel' ? '#ec4899' : (e.category === 'Eğitim' ? '#eab308' : '#6366f1');
                 list.innerHTML += `
-                    <div class="event-item">
+                    <div class="event-item" style="border-left-color: ${catColor};">
                         <div>
-                            <strong style="font-size:0.9rem;">📌 ${e.title}</strong><br>
+                            <strong>${e.title}</strong> <span class="badge" style="background:${catColor}33; color:${catColor};">${e.category}</span><br>
                             <small style="color:var(--text-muted);">📅 ${e.date} ⏰ ${e.time}</small>
                         </div>
-                        <button onclick="deleteEvent(${e.id})" style="border:none; background:transparent; color:#ef4444; cursor:pointer; font-size:1rem;">🗑️</button>
+                        <button onclick="deleteEvent(${e.id})" style="border:none; background:transparent; color:#ef4444; cursor:pointer;">🗑️</button>
                     </div>`;
             });
         }
         
         function deleteEvent(id) { 
             events = events.filter(e => e.id !== id); 
-            localStorage.setItem('calendar_events', JSON.stringify(events)); 
+            localStorage.setItem('pro_calendar_events', JSON.stringify(events)); 
             initCalendar(); 
+        }
+
+        // Geri Sayım Sayacı
+        setInterval(() => {
+            const now = new Date();
+            const futureEvents = events
+                .map(e => ({ ...e, datetime: new Date(e.date + 'T' + e.time) }))
+                .filter(e => e.datetime > now)
+                .sort((a, b) => a.datetime - b.datetime);
+
+            const box = document.getElementById('countdownBox');
+            if (futureEvents.length === 0) {
+                box.innerText = "⏳ Yaklaşan etkinlik yok";
+                return;
+            }
+
+            const next = futureEvents[0];
+            const diff = next.datetime - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const mins = Math.floor((diff / 1000 / 60) % 60);
+
+            box.innerText = `⏳ "${next.title}" için: ${days > day = days + ' gün ' : ''}${days > 0 ? days + 'g ' : ''}${hours}s ${mins}dk kaldı`;
+        }, 1000);
+
+        // Tema Değiştirici
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            document.getElementById('themeBtn').innerText = isLight ? '🌙 Tema' : '☀️ Tema';
+        }
+
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+            document.getElementById('themeBtn').innerText = '🌙 Tema';
+        }
+
+        // Yedekleme (Export)
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(events));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", "termin_yedekleri.json");
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        // Geri Yükleme (Import)
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    events = JSON.parse(e.target.result);
+                    localStorage.setItem('pro_calendar_events', JSON.stringify(events));
+                    initCalendar();
+                    alert('Yedek başarıyla yüklendi!');
+                } catch(err) {
+                    alert('Geçersiz dosya!');
+                }
+            };
+            reader.readAsText(file);
         }
         
         initCalendar();
