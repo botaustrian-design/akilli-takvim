@@ -7,19 +7,18 @@
     <style>
         :root {
             --bg: #0f172a;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
+            --card-bg: #1e293b;
+            --border: #334155;
             --text: #f8fafc;
             --text-muted: #94a3b8;
             --primary: #6366f1;
             --secondary: #a855f7;
-            input-bg: #0f172a;
         }
 
         .light-mode {
             --bg: #f1f5f9;
-            --card-bg: rgba(255, 255, 255, 0.8);
-            --border: rgba(0, 0, 0, 0.1);
+            --card-bg: #ffffff;
+            --border: #cbd5e1;
             --text: #0f172a;
             --text-muted: #64748b;
         }
@@ -34,21 +33,26 @@
 
         .card { 
             width: 100%; max-width: 480px; background: var(--card-bg);
-            backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border: 1px solid var(--border);
             padding: 20px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             box-sizing: border-box;
         }
 
         .top-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         
+        .notification-banner {
+            background: #ef4444; color: white; padding: 10px; border-radius: 12px;
+            text-align: center; margin-bottom: 15px; font-size: 0.8rem; font-weight: bold; cursor: pointer;
+        }
+
         .countdown-box {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white; padding: 12px; border-radius: 16px; text-align: center;
-            margin-bottom: 15px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+            margin-bottom: 15px; font-size: 0.85rem; font-weight: 600;
         }
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .header h2 { margin: 0; font-size: 1.2rem; }
+        .header h2 { margin: 0; font-size: 1.2rem; color: var(--text); }
 
         .btn { 
             background: linear-gradient(135deg, var(--primary), var(--secondary)); 
@@ -57,17 +61,17 @@
         }
         .btn:hover { transform: scale(1.03); }
 
-        .search-box { width: 100%; padding: 10px 15px; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-radius: 12px; box-sizing: border-box; margin-bottom: 15px; font-size: 0.9rem; }
+        .search-box { width: 100%; padding: 10px 15px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 12px; box-sizing: border-box; margin-bottom: 15px; font-size: 0.9rem; }
 
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
         .day-name { font-size: 0.75rem; color: var(--text-muted); font-weight: bold; padding-bottom: 5px; }
         
         .day-cell { 
-            padding: 10px 0; border-radius: 10px; cursor: pointer; 
-            background: var(--card-bg); border: 1px solid var(--border);
+            padding: 12px 0; border-radius: 10px; cursor: pointer; 
+            background: var(--bg); border: 1px solid var(--border); color: var(--text);
             transition: all 0.2s; font-size: 0.85rem; position: relative;
         }
-        .day-cell:hover:not(.past) { background: var(--primary); color: white; transform: translateY(-2px); }
+        .day-cell:hover:not(.past) { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-2px); }
         .day-cell.has-event::after { content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; background: #38bdf8; border-radius: 50%; }
         .day-cell.past { opacity: 0.2; cursor: not-allowed; }
 
@@ -78,20 +82,20 @@
         }
         .modal.active { display: flex; }
         .modal-content { 
-            background: var(--bg); padding: 20px; border-radius: 20px; width: 100%; max-width: 360px;
+            background: var(--card-bg); padding: 20px; border-radius: 20px; width: 100%; max-width: 360px;
             border: 1px solid var(--border); box-shadow: 0 15px 30px rgba(0,0,0,0.4);
         }
 
-        .form-control { width: 100%; padding: 10px; margin: 8px 0; background: var(--card-bg); border: 1px solid var(--border); color: var(--text); border-radius: 10px; box-sizing: border-box; font-size: 0.9rem; }
+        .form-control { width: 100%; padding: 10px; margin: 6px 0; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 10px; box-sizing: border-box; font-size: 0.9rem; }
         
-        .category-selector { display: flex; gap: 8px; margin: 8px 0; }
-        .cat-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
+        .category-selector { display: flex; gap: 8px; margin: 6px 0; }
+        .cat-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
         .cat-btn.selected { border-color: var(--primary); background: var(--primary); color: white; }
 
         .event-item { 
-            background: var(--card-bg); padding: 10px 12px; border-radius: 12px; 
+            background: var(--bg); padding: 10px 12px; border-radius: 12px; 
             margin-top: 8px; display: flex; justify-content: space-between; align-items: center;
-            border-left: 4px solid var(--primary); font-size: 0.85rem;
+            border-left: 4px solid var(--primary); font-size: 0.85rem; color: var(--text);
         }
         .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); margin-left: 5px; }
     </style>
@@ -99,6 +103,10 @@
 <body>
 
     <div class="card">
+        <div id="notifBanner" class="notification-banner" onclick="requestNotificationPermission()" style="display:none;">
+            🔔 Ses ve Bildirimler için Tıkla (İzin Ver)
+        </div>
+
         <div class="top-actions">
             <button class="btn" onclick="toggleTheme()" id="themeBtn">☀️ Tema</button>
             <div>
@@ -132,7 +140,7 @@
     <!-- Modal -->
     <div class="modal" id="eventModal">
         <div class="modal-content">
-            <h3 style="margin-top:0; font-size:1rem;">📌 Yeni Termin Ekle</h3>
+            <h3 style="margin-top:0; font-size:1rem; color:var(--text);">📌 Yeni Termin Ekle</h3>
             <input type="text" class="form-control" id="eventTitleInput" placeholder="Etkinlik İsmi">
             
             <div class="category-selector">
@@ -142,7 +150,12 @@
             </div>
 
             <textarea class="form-control" id="eventBioInput" rows="2" placeholder="Bio / Açıklama"></textarea>
+            
+            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 5px;">Etkinlik Saati:</label>
             <input type="time" class="form-control" id="eventTimeInput" value="12:00">
+
+            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 5px;">🔔 Ne zaman çalsın? (Bildirim Saati):</label>
+            <input type="time" class="form-control" id="eventAlarmInput" value="11:55">
 
             <div style="display:flex; gap:8px; margin-top:12px;">
                 <button class="btn" style="flex:1; background:#64748b;" onclick="closeModal()">İptal</button>
@@ -153,7 +166,7 @@
 
     <script>
         let currentDate = new Date();
-        let events = JSON.parse(localStorage.getItem('pro_calendar_events')) || [];
+        let events = JSON.parse(localStorage.getItem('pro_calendar_events_v2')) || [];
         let selectedDateStr = '';
         let selectedCategory = 'İş';
 
@@ -215,9 +228,11 @@
                 title: title, 
                 bio: document.getElementById('eventBioInput').value, 
                 time: document.getElementById('eventTimeInput').value,
-                category: selectedCategory
+                alarmTime: document.getElementById('eventAlarmInput').value,
+                category: selectedCategory,
+                alerted: false
             });
-            localStorage.setItem('pro_calendar_events', JSON.stringify(events));
+            localStorage.setItem('pro_calendar_events_v2', JSON.stringify(events));
             closeModal(); initCalendar();
         }
         
@@ -237,7 +252,7 @@
                     <div class="event-item" style="border-left-color: ${catColor};">
                         <div>
                             <strong>${e.title}</strong> <span class="badge" style="background:${catColor}33; color:${catColor};">${e.category}</span><br>
-                            <small style="color:var(--text-muted);">📅 ${e.date} ⏰ ${e.time}</small>
+                            <small style="color:var(--text-muted);">📅 ${e.date} ⏰ ${e.time} (Alarm: ${e.alarmTime || e.time})</small>
                         </div>
                         <button onclick="deleteEvent(${e.id})" style="border:none; background:transparent; color:#ef4444; cursor:pointer;">🗑️</button>
                     </div>`;
@@ -246,11 +261,60 @@
         
         function deleteEvent(id) { 
             events = events.filter(e => e.id !== id); 
-            localStorage.setItem('pro_calendar_events', JSON.stringify(events)); 
+            localStorage.setItem('pro_calendar_events_v2', JSON.stringify(events)); 
             initCalendar(); 
         }
 
-        // Geri Sayım Sayacı
+        // Alarm ve Bildirim Kontrolü
+        setInterval(() => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            const currentDateStr = `${year}-${month}-${day}`;
+            const currentTimeStr = `${hours}:${minutes}`;
+
+            events.forEach(e => {
+                const triggerTime = e.alarmTime || e.time;
+                if (e.date === currentDateStr && triggerTime === currentTimeStr && !e.alerted) {
+                    e.alerted = true;
+                    localStorage.setItem('pro_calendar_events_v2', JSON.stringify(events));
+                    
+                    speakText(`Dikkat! ${e.title} zamanı geldi.`);
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        new Notification("Alarm: " + e.title, { body: e.bio || "Termin vakti geldi!" });
+                    }
+                }
+            });
+        }, 10000);
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'tr-TR';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        document.getElementById('notifBanner').style.display = 'none';
+                        new Notification("Harika!", { body: "Bildirimler aktif edildi." });
+                    }
+                });
+            }
+        }
+
+        if ("Notification" in window && Notification.permission !== "granted") {
+            document.getElementById('notifBanner').style.display = 'block';
+        }
+
+        // Geri Sayım
         setInterval(() => {
             const now = new Date();
             const futureEvents = events
@@ -270,7 +334,7 @@
             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const mins = Math.floor((diff / 1000 / 60) % 60);
 
-            box.innerText = `⏳ "${next.title}" için: ${days > day = days + ' gün ' : ''}${days > 0 ? days + 'g ' : ''}${hours}s ${mins}dk kaldı`;
+            box.innerText = `⏳ "${next.title}" için: ${days > 0 ? days + 'g ' : ''}${hours}s ${mins}dk kaldı`;
         }, 1000);
 
         // Tema Değiştirici
@@ -286,7 +350,6 @@
             document.getElementById('themeBtn').innerText = '🌙 Tema';
         }
 
-        // Yedekleme (Export)
         function exportData() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(events));
             const dlAnchor = document.createElement('a');
@@ -297,7 +360,6 @@
             dlAnchor.remove();
         }
 
-        // Geri Yükleme (Import)
         function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -305,12 +367,10 @@
             reader.onload = function(e) {
                 try {
                     events = JSON.parse(e.target.result);
-                    localStorage.setItem('pro_calendar_events', JSON.stringify(events));
+                    localStorage.setItem('pro_calendar_events_v2', JSON.stringify(events));
                     initCalendar();
-                    alert('Yedek başarıyla yüklendi!');
-                } catch(err) {
-                    alert('Geçersiz dosya!');
-                }
+                    alert('Yedek yüklendi!');
+                } catch(err) { alert('Hatalı dosya!'); }
             };
             reader.readAsText(file);
         }
@@ -318,4 +378,5 @@
         initCalendar();
     </script>
 </body>
-</html>
+                    </html>
+    
