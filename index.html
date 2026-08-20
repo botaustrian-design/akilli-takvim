@@ -375,8 +375,24 @@
             };
             reader.readAsText(file);
         }
-        
-        initCalendar();
+            // Sesli Uyarı Sistemi
+    function terminSesliUyar(terminIsmi) {
+        const mesajMetni = "DİKKAT! TERMİN YAKLAŞIYOR! " + terminIsmi;
+        const msg = new SpeechSynthesisUtterance(mesajMetni);
+        msg.lang = 'tr-TR';
+        msg.rate = 1;
+        msg.volume = 1;
+        window.speechSynthesis.speak(msg);
+    }
+
+    setInterval(() => {
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+    }, 60000);
+
+    initCalendar();
+   
     </script>
 </body>
                     </html>
