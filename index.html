@@ -375,17 +375,16 @@
             };
             reader.readAsText(file);
         }
-            // Sesli Uyarı Sistemi
-function terminSesliUyar(terminIsmi) {
-    const mesajMetni = "DİKKAT! " + terminIsmi + " YAKLAŞIYOR!";
-    const msg = new SpeechSynthesisUtterance(mesajMetni);
+            // Sesli Uyarı Sistemi (Direkt terminin kendi adını söyler)
+function terminSesliUyar(metin) {
+    const msg = new SpeechSynthesisUtterance("Dikkat. " + metin + " vakti geldi.");
     msg.lang = 'tr-TR';
     msg.rate = 1;
     msg.volume = 1;
     window.speechSynthesis.speak(msg);
 }
 
-// Gelişmiş Kontrol Sistemi (Türkçe/İngilizce Uyumlu)
+// Akıllı Alarm ve Konuşma Kontrolü
 setInterval(() => {
     if (Notification.permission !== "granted") {
         Notification.requestPermission();
@@ -393,28 +392,23 @@ setInterval(() => {
     
     const savedEvents = JSON.parse(localStorage.getItem('pro_calendar_events_v2')) || [];
     const simdi = new Date();
+    const simdikiSaatDakika = String(simdi.getHours()).padStart(2, '0') + ':' + String(simdi.getMinutes()).padStart(2, '0');
     
     savedEvents.forEach(termin => {
-        // Alan adları ister İngilizce ister Türkçe olsun yakalar
-        const tarihStr = termin.date || termin.tarih;
-        const saatStr = termin.time || termin.saat;
-        const baslikStr = termin.title || termin.baslik || "Termin";
+        // Takvimin kaydettiği alarm saatini ve başlığı alıyoruz
+        const alarmZamani = termin.alarm || termin.alarmTime || termin.time || termin.saat;
+        const baslik = termin.title || termin.baslik || termin.isim || "Termin";
         
-        if (!tarihStr || !saatStr) return;
-        
-        const terminZamani = new Date(tarihStr + 'T' + saatStr);
-        const alarmVakti = new Date(terminZamani.getTime() - (4 * 60 * 60 * 1000));
-        
-        const fark = Math.abs(simdi - alarmVakti) / 60000;
-        
-        if (fark <= 2) {
-            terminSesliUyar(baslikStr);
-            if (Notification.permission === "granted") {
-                new Notification("Akıllı Takvim", { body: "DİKKAT! " + baslikStr + " YAKLAŞIYOR!" });
+        if (alarmZamani) {
+            if (alarmZamani.includes(simdikiSaatDakika)) {
+                terminSesliUyar(baslik);
+                if (Notification.permission === "granted") {
+                    new Notification("Akıllı Takvim", { body: "Dikkat! " + baslik + " vakti geldi." });
+                }
             }
         }
     });
-}, 30000);
+}, 15000);
        
     initCalendar();
    
